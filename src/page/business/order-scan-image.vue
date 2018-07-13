@@ -1,0 +1,81 @@
+<template>
+  <div class="order-scan-image">
+    <div style="background: #f2f2f2;">
+      <div class="title">查看当前订单的实体扫描件</div>
+      <div class="content">
+        <img :src="imgsrc" alt="" v-if="!isshow">
+        <p v-if="isshow" style="color: #000;padding-left: 10px;">该订单暂无扫描件</p>
+      </div>
+      <div class="footer">
+        <router-link to="order-detail">
+          <el-button  size="mini" type="primary">返回上一级</el-button>
+        </router-link>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import req from '../../api/business'
+export default {
+  data () {
+    return {
+      imgsrc: '',
+      isshow: false
+    }
+  },
+  mounted () {
+    this.getData()
+  },
+  methods: {
+    getData () {
+      let postData = {
+        serialNumber: localStorage.getItem('serialNumberParams'),
+        page: 1,
+        pageSize: 10
+      }
+      req('getqueryPrintResult', postData)
+      // this.$ajax.get('/ticket/queryPrintResult.json', postData)
+        .then(res => {
+          if (res.data.code === '00000') {
+            if (res.data.data.result.length) {
+              this.imgsrc = res.data.data.result[0].printResult
+            } else {
+              this.isshow = true
+            }
+          } else {
+            this.$message({
+              type: 'error',
+              message: res.data.msg
+            })
+          }
+        })
+    }
+  }
+}
+</script>
+<style lang="less">
+.order-scan-image{
+  width: 860px;
+  /* height: 460px; */
+  padding: 30px;
+  background-color: #ffffff;
+  border: 1px solid #797979;
+  .title{
+    color: #000000;
+    font-weight: 700;
+    font-size: 20px;
+    padding: 10px;
+  }
+  .content{
+    width: 860px;
+    /* height: 460px; */
+    /* background-image: url('../../assets/image/login.png'); */
+    /* color: red; */
+  }
+  .footer{
+    height: 50px;
+    padding: 20px;
+    text-align: right;
+  }
+}
+</style>

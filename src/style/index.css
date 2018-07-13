@@ -1,0 +1,10 @@
+.el-tabs--card>.el-tabs__header {
+    border: none;
+}
+.el-menu {
+    border: none;
+}
+.el-input.is-disabled .el-input__inner {
+    background-color: #fff !important;
+    color: #606266 !important;
+}

@@ -1,0 +1,356 @@
+<template>
+  <div class="order-management">
+    <i-layout :gray="true" :head="false">
+      <div slot="grayLayout">
+        <i-form @search="search" @empty="empty" size="mini">
+          <el-form-item label="订单编号">
+            <el-input v-model="formInline.serialNumber" maxlength="30"></el-input>
+          </el-form-item>
+          <el-form-item label="用户来源渠道">
+            <el-select v-model="formInline.regFrom">
+              <el-option v-for="item in regFromOption" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="支付状态">
+            <el-select v-model="formInline.payFlag">
+              <el-option v-for="item in payFlagOption" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="打印状态">
+            <el-select v-model="formInline.printFlag">
+              <el-option v-for="item in printFlagOption" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="退票状态">
+            <el-select v-model="formInline.refundTicketFlag">
+              <el-option v-for="item in refundTicketFlagOption" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="彩票类型">
+            <el-select v-model="formInline.bigLotteryType">
+              <el-option v-for="item in bigLotteryTypeOption" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="业务类型">
+            <el-select v-model="formInline.lotteryType">
+              <el-option v-for="item in lotteryTypeOption" :key="item.value" :label="item.label" :value="item.value">
+              </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="交易时间">
+            <el-date-picker v-model="formInline.beginCreateDate" type="datetime" placeholder="开始时间" format="yyyy-MM-dd hh:mm:ss" value-format="yyyy-MM-dd hh:mm:ss"></el-date-picker>
+            <span>—</span>
+            <el-date-picker v-model="formInline.endCreateDate" type="datetime" placeholder="结束时间" format="yyyy-MM-dd HH:mm:ss" value-format="yyyy-MM-dd HH:mm:ss"></el-date-picker>
+          </el-form-item>
+        </i-form>
+      </div>
+      <!-- <div slot="tableHead">
+        <el-button size="small">新建</el-button>
+        <el-button size="small">修改</el-button>
+        <el-button size="small">删除</el-button>
+        <el-button size="small">刷新</el-button>
+        <el-button size="small">批量处理</el-button>
+        <el-button size="small">导入</el-button>
+        <el-button size="small" @click="dialogVisible = true">导出</el-button>
+      </div> -->
+      <div style="background-color: #f2f2f2;margin-bottom: 10px">
+        <el-table ref="multipleTable" :data="tableData" border tooltip-effect="dark" style="width: 100%" @selection-change="handleSelectionChange" @row-dblclick="rowClick">
+          <!-- <el-table-column type="selection" width="55">
+          </el-table-column> -->
+          <el-table-column v-for="(item, index) in tableColumn" :key="index" :prop="item.prop" :label="item.label" :width="item.width">
+          </el-table-column>
+        </el-table>
+      </div>
+      <el-pagination background @current-change="handleCurrentChange" :current-page.sync="page" :page-size="pageSize" layout="total, prev, pager, next, jumper" :total="totalCount">
+      </el-pagination>
+    </i-layout>
+    <el-dialog title="导出条件" :visible.sync="dialogVisible" width="50%" center>
+      <el-form ref="form" :model="exportForm" label-width="100px">
+        <el-form-item label="订单编号" style="width:50%;">
+          <el-input v-model="exportForm.serialNumber"></el-input>
+        </el-form-item>
+        <el-form-item label="用户来源渠道" label-width="100px">
+          <el-select v-model="exportForm.regFrom">
+            <el-option v-for="item in regFromOption" :key="item.value" :label="item.label" :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="订单状态" label-width="100px">
+          <el-select v-model="exportForm.payFlag">
+            <el-option v-for="item in orderStutsOption" :key="item.value" :label="item.label" :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="彩票类型" label-width="100px">
+          <el-select v-model="exportForm.bigLotteryType">
+            <el-option v-for="item in bigLotteryTypeOption" :key="item.value" :label="item.label" :value="item.value">
+            </el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="交易时间" label-width="100px">
+          <el-date-picker v-model="exportForm.beginCreateDate" type="datetime" placeholder="开始时间" format="yyyy-MM-dd hh:mm:ss" value-format="yyyy-MM-dd hh:mm:ss"></el-date-picker>
+          <span>—</span>
+          <el-date-picker v-model="exportForm.endCreateDate" type="datetime" placeholder="结束时间" format="yyyy-MM-dd HH:mm:ss" value-format="yyyy-MM-dd HH:mm:ss"></el-date-picker>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">关  闭</el-button>
+        <el-button type="primary" @click="dialogVisible = false">导 出</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+<script>
+export default {
+  data () {
+    return {
+      formInline: {
+        serialNumber: '',
+        beginCreateDate: '',
+        endCreateDate: '',
+        regFrom: '',
+        payFlag: '',
+        lotteryType: '',
+        bigLotteryType: '',
+        printFlag: '',
+        refundTicketFlag: '',
+        takeTicketsFlag: ''
+      },
+      payFlagOption: [
+        { value: 0, label: '未支付' },
+        { value: 1, label: '支付确认中' },
+        { value: 2, label: '支付成功' },
+        { value: 3, label: '支付失败' }
+      ],
+      printFlagOption: [
+        { value: 0, label: '未打印' },
+        { value: 1, label: '已下发' },
+        { value: 2, label: '打印成功' },
+        { value: 3, label: '打印失败' }
+      ],
+      refundTicketFlagOption: [
+        { value: 0, label: '无退票' },
+        { value: 1, label: '退票中' },
+        { value: 2, label: '退票成功' }
+      ],
+      orderStutsOption: [
+        { value: 'waitPay', label: '待付款' },
+        { value: 'waitTicket', label: '待出票' },
+        { value: 'ticketed', label: '已出票' },
+        { value: 'waitCollect', label: '待取票' },
+        { value: 'collected', label: '已取票' },
+        { value: 'cancelled', label: '已取消' }
+      ],
+      regFromOption: [
+        { value: '1', label: '中石化' },
+        { value: '2', label: '自营' }
+      ],
+      bigLotteryTypeOption: [
+        { value: 1, label: '体彩' },
+        { value: 2, label: '福彩' }
+      ],
+      lotteryTypeOption: [
+        { value: '51', label: '竞彩足球' },
+        { value: '52', label: '竞彩篮球' }
+      ],
+      tableColumn: [
+        { prop: 'serialNumber', label: '订单编号', width: '200' },
+        { prop: 'memberId', label: '用户编码', width: '200' },
+        { prop: 'lotteryType', label: '业务类型', width: '100' },
+        { prop: 'subPlayType', label: '彩种类型', width: '100' },
+        { prop: 'createDate', label: '交易时间', width: '170' },
+        { prop: 'regFrom', label: '用户来源渠道', width: '110' },
+        { prop: 'amount', label: '交易金额', width: '100' },
+        { prop: 'payFlags', label: '订单状态', width: '210' }
+      ],
+      tableData: [],
+      multipleSelection: [],
+      dialogVisible: false,
+      exportForm: {
+        serialNumber: '',
+        bigLotteryType: '',
+        regFrom: '',
+        payFlag: '',
+        beginCreateDate: '',
+        endCreateDate: ''
+      },
+      page: 1,
+      pageSize: 10,
+      totalCount: 0,
+      searchFlag: false
+    }
+  },
+  created () {
+    if (localStorage.getItem('lastRouter') === '/business/order-detail') {
+      this.totalCount = JSON.parse(localStorage.getItem('page')).totalCount
+      this.page = JSON.parse(localStorage.getItem('page')).page
+    }
+    this.getData()
+  },
+  methods: {
+    getData () {
+      this.searchFlag || Object.keys(this.formInline).map(key => {
+        this.formInline[key] = ''
+      })
+      let nullFlag = false
+      Object.keys(this.formInline).map(key => {
+        this.formInline[key] !== '' && (nullFlag = true)
+      })
+      nullFlag || (this.searchFlag = false)
+      let postData = {
+        ...this.formInline,
+        page: this.page,
+        pageSize: this.pageSize
+      }
+      this.$ajax.post('/order/orderListByPage.json', postData)
+        .then(res => {
+          if (res.data.code === '00000') {
+            res.data.data.result.map(val => {
+              val.lotteryType === '51' ? val.lotteryType = '竞彩足球' : val.lotteryType = '竞彩篮球'
+              val.regFrom === 1 ? val.regFrom = '中石化' : val.regFrom = '自营'
+              switch (val.payFlag) {
+                case 0:
+                  val.payFlag = '未支付'
+                  break
+                case 1:
+                  val.payFlag = '支付确认中'
+                  break
+                case 2:
+                  val.payFlag = '支付成功'
+                  break
+                case 3:
+                  val.payFlag = '支付失败'
+                  break
+                default:
+                  break
+              }
+              switch (val.printFlag) {
+                case 0:
+                  val.printFlag = '未打印'
+                  break
+                case 1:
+                  val.printFlag = '已下发'
+                  break
+                case 2:
+                  val.printFlag = '打印成功'
+                  break
+                case 3:
+                  val.printFlag = '打印失败'
+                  break
+                default:
+                  break
+              }
+              switch (val.refundTicketFlag) {
+                case 0:
+                  val.refundTicketFlag = '无退票'
+                  break
+                case 1:
+                  val.refundTicketFlag = '退票中'
+                  break
+                case 2:
+                  val.refundTicketFlag = '退票成功'
+                  break
+                default:
+                  break
+              }
+              switch (val.subPlayType) {
+                case '51':
+                  val.subPlayType = '胜平负'
+                  break
+                case '52':
+                  val.subPlayType = '比分'
+                  break
+                case '53':
+                  val.subPlayType = '总进球'
+                  break
+                case '54':
+                  val.subPlayType = '半全场'
+                  break
+                case '56':
+                  val.subPlayType = '让球胜平负'
+                  break
+                case '59':
+                  val.subPlayType = '混合'
+                  break
+                default:
+                  break
+              }
+              let payFlagsObj = {
+                payFlag: val.payFlag,
+                printFlag: val.printFlag,
+                refundTicketFlag: val.refundTicketFlag
+              }
+              let str = ''
+              Object.keys(payFlagsObj).map(key => {
+                if (!payFlagsObj[key]) {
+                  return
+                }
+                str += payFlagsObj[key] + '，'
+              })
+              val.payFlags = str.substring(0, str.length - 1)
+              // val.payFlags = `${val.payFlag},${val.printFlag},${val.refundTicketFlag}`
+              val.amount = (val.amount / 100).toFixed(2)
+            })
+            this.tableData = res.data.data.result
+            this.totalCount = res.data.data.totalCount
+          } else {
+            this.$message({
+              type: 'error',
+              message: res.data.msg
+            })
+          }
+        })
+    },
+    search () {
+      this.searchFlag = true
+      this.getData()
+    },
+    empty () {
+      Object.keys(this.formInline).map(key => {
+        this.formInline[key] = ''
+      })
+      this.searchFlag = false
+      this.page = 1
+      this.getData()
+    },
+    handleCurrentChange (val) {
+      this.page = val
+      this.getData()
+    },
+    handleSelectionChange (val) {
+      this.multipleSelection = val
+    },
+    rowClick (row, event) {
+      let page = {
+        page: this.page,
+        totalCount: this.totalCount
+      }
+      localStorage.setItem('page', JSON.stringify(page))
+      this.$router.push({'name': '订单详情', params: {serialNumber: row.serialNumber}})
+    }
+  }
+}
+</script>
+<style lang="less">
+.order-management{
+  .el-table td, .order-detail .el-table th.is-leaf {
+    text-align: center;
+  }
+  .el-table th, .el-table tr {
+    cursor: pointer !important;
+    text-align: center !important;
+  }
+  .el-pagination{
+    text-align:center;
+    margin-top:20px;
+  }
+  .i-form .el-form-item .el-input {
+    width: 180px !important;
+  }
+}
+</style>
